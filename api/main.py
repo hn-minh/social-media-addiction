@@ -8,7 +8,7 @@ import joblib
 
 # Import config và router
 from src import config
-from api.routers import predict
+from api.routers import predict, collect
 
 # Setup Logging
 logging.basicConfig(
@@ -74,6 +74,7 @@ app = FastAPI(
 
 # KẾT NỐI ROUTERS
 app.include_router(predict.router)
+app.include_router(collect.router)
 
 @app.get("/", tags=["Health Check"])
 def health_check():
