@@ -5,7 +5,6 @@ import mlflow.sklearn
 import mlflow.data
 from mlflow.tracking import MlflowClient
 from mlflow.exceptions import MlflowException
-from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
@@ -14,6 +13,12 @@ from lightgbm import LGBMClassifier
 from sklearn.metrics import f1_score, accuracy_score
 
 from src import config
+import os
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+load_dotenv()
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +37,7 @@ def train_models(X_train, y_train, X_test, y_test):
     best_model = None
     best_score = 0.0
 
-    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
     train_dataset = mlflow.data.from_numpy(features=X_train, targets=y_train, name="SocialMedia_Train_Data")
@@ -41,36 +46,27 @@ def train_models(X_train, y_train, X_test, y_test):
     for name, model in models.items():
         logger.info(f"Đang chạy và log model: {name}...")
         
-        # Mở một "Run" mới trong MLflow cho mỗi thuật toán
         with mlflow.start_run(run_name=name):
 
             mlflow.log_input(train_dataset, context="training")
             mlflow.log_input(test_dataset, context="evaluation")
             
-            # Huấn luyện
             model.fit(X_train, y_train)
             
-            # Dự đoán
             y_pred = model.predict(X_test)
             
-            # Chấm điểm
             score = f1_score(y_test, y_pred, average='weighted')
             acc = accuracy_score(y_test, y_pred)
             
-            # --- SỨC MẠNH CỦA MLFLOW NẰM Ở ĐÂY ---
-            # Tự động lưu toàn bộ tham số của model (n_estimators, max_depth, kernel...)
             mlflow.log_params(model.get_params())
             
-            # Lưu điểm số để so sánh
             mlflow.log_metric("f1_weighted", score)
             mlflow.log_metric("accuracy", acc)
             
-            # Lưu lại chính cấu trúc model đó lên MLflow
-            mlflow.sklearn.log_model(model, artifact_path=name)
+            mlflow.sklearn.log_model(model, name=name)
             
             logger.info(f"[{name}] - F1-Score: {score:.4f} | Accuracy: {acc:.4f}")
 
-            # Cập nhật model tốt nhất trong phiên chạy này
             if score > best_score:
                 best_score = score
                 best_model = model
@@ -97,44 +93,38 @@ def save_artifacts(best_model, best_model_name, best_score, scaler, encoders_dic
     temp_preprocessor_path = config.MODEL_DIR / "preprocessor_bundle.pkl"
     joblib.dump(preprocessor_bundle, temp_preprocessor_path)
 
-    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
     model_name = "SocialMediaAddiction_Classifier"
     alias_name = "production"
 
-    # 2. Đẩy Model phiên bản mới lên MLflow
     with mlflow.start_run(run_name="Model_Evaluation_and_Registration") as run:
         
-        # log_model trả về object chứa thông tin version vừa đăng ký
         model_info = mlflow.sklearn.log_model(
             sk_model=best_model,
-            artifact_path="model",
-            registered_model_name=model_name
+            name="model",
+            registered_model_name=model_name,
+            serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE
         )
         
         mlflow.log_artifact(local_path=str(temp_preprocessor_path), artifact_path="preprocessors")
         mlflow.log_param("winning_algorithm", best_model_name)
-        # Ghi lại điểm F1 của phiên bản này để lần sau có cái so sánh
         mlflow.log_metric("validation_f1_score", best_score) 
         
         new_version = model_info.registered_model_version
         logger.info(f"Đã đăng ký Model mới thành công: Version {new_version}")
 
-    # 3. LOGIC GÁN NHÃN (MODEL PROMOTION) BẰNG MLFLOW CLIENT
     client = MlflowClient()
 
     try:
-        # Tìm xem hệ thống đã có model nào mang nhãn 'production' chưa
         prod_model = client.get_model_version_by_alias(name=model_name, alias=alias_name)
         
-        # Lấy lại điểm F1 của model production hiện tại từ Run ID của nó
         prod_run = client.get_run(prod_model.run_id)
         prod_score = prod_run.data.metrics.get("validation_f1_score", 0.0)
         
         logger.info(f"Model Production hiện tại: Version {prod_model.version} (F1: {prod_score:.4f})")
         logger.info(f"Model mới huấn luyện: Version {new_version} (F1: {best_score:.4f})")
 
-        # So sánh: Nếu model mới xịn hơn, tước ngôi production của model cũ và gán cho model mới
         if best_score > prod_score:
             logger.info("🎉 Thử thách THÀNH CÔNG! Model mới hoạt động tốt hơn.")
             logger.info(f"Đang thăng cấp Version {new_version} lên nhãn '{alias_name}'...")
@@ -144,7 +134,6 @@ def save_artifacts(best_model, best_model_name, best_score, scaler, encoders_dic
             logger.info(f"Giữ nguyên nhãn '{alias_name}' cho Version {prod_model.version}.")
 
     except MlflowException:
-        # Nếu exception xảy ra, nghĩa là chưa từng có model nào mang nhãn production (chạy lần đầu)
         logger.info(f"Chưa có model '{alias_name}' nào trên hệ thống. Đang gán nhãn cho Version {new_version}...")
         client.set_registered_model_alias(name=model_name, alias=alias_name, version=new_version)
 

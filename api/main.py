@@ -5,27 +5,23 @@ import mlflow
 from mlflow.tracking import MlflowClient
 from mlflow.exceptions import MlflowException
 import joblib
+import os
+from dotenv import load_dotenv
 
-# Import config và router
-from src import config
 from api.routers import predict, collect
 
-# Setup Logging
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
+load_dotenv()
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Đang khởi động API Server... Kết nối MLflow để tải Model @production.")
     
-    # Khởi tạo state chứa ML components một cách an toàn
     app.state.ml_components = {}
     
     try:
-        mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         client = MlflowClient()
         
         model_name = "SocialMediaAddiction_Classifier"

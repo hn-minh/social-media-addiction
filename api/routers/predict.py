@@ -1,14 +1,16 @@
 import logging
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Request
-
-# Import schema và hàm xử lý
 from api.schemas.user_input import UserInput
 from src.preprocessing import preprocess_for_prediction
+logger = logging.getLogger(__name__)
+import os
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+load_dotenv()
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
-# Khởi tạo Router thay vì FastAPI app
 router = APIRouter(
     prefix="/predict",
     tags=["Prediction"]

@@ -1,24 +1,16 @@
 import logging
 import sys
-from src import config
-from src.data_ingestion import load_data
-from src.preprocessing import engineer_features, preprocess_and_split
-from src.train import train_models, save_artifacts
+from data_ingestion import load_data
+from preprocessing import engineer_features, preprocess_and_split
+from train import train_models, save_artifacts
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
 logger = logging.getLogger(__name__)
 
 def run_pipeline():
     logger.info("START TRAINING PIPELINE")
 
     try:
-        df_raw = load_data(config.DATA_PATH)
+        df_raw = load_data()
 
         df_engineered = engineer_features(df_raw)
         X_train, X_test, y_train, y_test, scaler, encoders_dict, target_encoder, score_percentiles = preprocess_and_split(df_engineered)

@@ -3,7 +3,7 @@ import numpy as np
 import logging
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from src.config import MIN_SAMPLES_REQUIRED, ASIAN_COUNTRIES, EUROPEAN_COUNTRIES, AMERICAN_COUNTRIES, TEST_SIZE
+from src import config
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +15,11 @@ def engineer_features(df):
         df.drop("Student_ID", axis=1, inplace=True)
     if "Addicted_Score" in df.columns:
         class_counts = df['Addicted_Score'].value_counts()
-        valid_classes = class_counts[class_counts >= MIN_SAMPLES_REQUIRED].index
-        dropped_classes = class_counts[class_counts < MIN_SAMPLES_REQUIRED].index
+        valid_classes = class_counts[class_counts >= config.MIN_SAMPLES_REQUIRED].index
+        dropped_classes = class_counts[class_counts < config.MIN_SAMPLES_REQUIRED].index
         
         if len(dropped_classes) > 0:
-            logger.warning(f"Hệ thống tự động loại bỏ các class sau do quá ít dữ liệu (<{MIN_SAMPLES_REQUIRED} mẫu): {list(dropped_classes)}")
+            logger.warning(f"Hệ thống tự động loại bỏ các class sau do quá ít dữ liệu (<{config.MIN_SAMPLES_REQUIRED} mẫu): {list(dropped_classes)}")
             df = df[df['Addicted_Score'].isin(valid_classes)].reset_index(drop=True)
         else:
             logger.info("Tất cả các class đều đủ số lượng mẫu tối thiểu. Không có class nào bị loại bỏ.")
@@ -41,9 +41,9 @@ def engineer_features(df):
     )
 
     df['Region'] = df['Country'].apply(
-        lambda x: 'Asia' if x in ASIAN_COUNTRIES 
-        else 'Europe' if x in EUROPEAN_COUNTRIES 
-        else 'Americas' if x in AMERICAN_COUNTRIES 
+        lambda x: 'Asia' if x in config.ASIAN_COUNTRIES 
+        else 'Europe' if x in config.EUROPEAN_COUNTRIES 
+        else 'Americas' if x in config.AMERICAN_COUNTRIES 
         else 'Other'
     )
 
@@ -81,7 +81,7 @@ def preprocess_and_split(df: pd.DataFrame):
     logger.info(f"Đã encode {len(object_cols)} cột categorical.")
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y_encoded, test_size=TEST_SIZE, random_state=537, stratify=y_encoded
+        X, y_encoded, test_size=config.TEST_SIZE, random_state=537, stratify=y_encoded
     )
     logger.info(f"Split thành công")
 

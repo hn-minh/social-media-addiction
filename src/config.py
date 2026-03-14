@@ -14,9 +14,7 @@ TEST_SIZE = 0.2
 RANDOM_STATE = 42
 MIN_SAMPLES_REQUIRED = 5
 
-
-MLFLOW_EXPERIMENT_NAME = "social_media_addiction_classification"
-MLFLOW_TRACKING_URI = f"sqlite:///{BASE_DIR}/mlflow.db".replace("\\", "/")
+MLFLOW_EXPERIMENT_NAME = "social_media_addiction"
 
 ASIAN_COUNTRIES = ['Bangladesh', 'India', 'China', 'Japan', 'South Korea', 'Singapore', 'Malaysia', 
                     'Thailand', 'Vietnam', 'Philippines', 'Indonesia', 'Taiwan', 'Hong Kong']
