@@ -1,0 +1,27 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-name: ubuntu-latest
+
+    steps:
+      - name: Kết nối SSH vào server EC2 và cập nhật Docker
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd social-media-addiction.mlflow
+            
+            git pull origin main
+            
+            sudo docker-compose up -d --build
+            
+            sudo docker image prune -f

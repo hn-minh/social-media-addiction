@@ -13,7 +13,7 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("📱 Hệ Thống AI Đánh Giá Mức Độ Nghiện Mạng Xã Hội")
+st.title("📱 Hệ Thống Đánh Giá Mức Độ Nghiện Mạng Xã Hội")
 st.markdown("""
     Chào mừng bạn đến với hệ thống đánh giá tự động. Vui lòng nhập thông tin thói quen 
     sử dụng mạng xã hội của bạn, hệ thống của chúng tôi sẽ phân tích và đưa ra kết quả.
