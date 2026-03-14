@@ -6,9 +6,32 @@ on:
       - main
 
 jobs:
+  test:
+      name: Run Pytest
+      runs-on: ubuntu-latest
+      
+      steps:
+        - name: Lấy mã nguồn từ GitHub
+          uses: actions/checkout@v4
+          
+        - name: Cài đặt môi trường Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: "3.12"
+            
+        - name: Cài đặt uv
+          run: curl -LsSf https://astral.sh/uv/install.sh | sh
+          
+        - name: Cài đặt thư viện dự án
+          run: uv pip install --system -r pyproject.toml
+          
+        - name: Chạy kiểm thử tự động với Pytest
+          run: uv run pytest tests/ -v
+
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - name: Kết nối SSH vào server EC2 và cập nhật Docker
