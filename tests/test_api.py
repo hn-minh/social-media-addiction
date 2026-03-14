@@ -30,7 +30,7 @@ def test_health_check():
     assert response.json() == {"status": "OK"}
 
 @patch("pandas.DataFrame.to_sql")
-@patch("sqlalchemy.create_engine")
+@patch("api.routers.collect.create_engine")
 def test_collect_user_data_mock(mock_engine, mock_to_sql):
     collect_payload = sample_payload.copy()
     collect_payload["Addicted_Score"] = 3
@@ -43,7 +43,6 @@ def test_collect_user_data_mock(mock_engine, mock_to_sql):
 
 @patch("api.routers.predict.preprocess_for_prediction")
 def test_predict_addiction_mock(mock_preprocess):
-    """Test predict mà không cần model thật"""
     
     mock_preprocess.return_value = MagicMock()
     
