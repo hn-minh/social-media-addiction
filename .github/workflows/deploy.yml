@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     name: Deploy to EC2
-    runs-name: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Kết nối SSH vào server EC2 và cập nhật Docker
