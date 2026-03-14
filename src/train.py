@@ -11,7 +11,6 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.metrics import f1_score, accuracy_score
-
 from src import config
 import os
 from dotenv import load_dotenv
@@ -20,10 +19,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
-logger = logging.getLogger(__name__)
-
 def train_models(X_train, y_train, X_test, y_test):
-    logger.info("Bắt đầu quá trình huấn luyện và chọn lọc model cùng MLflow...")
+    logger.info("Starting model training and selection with MLflow.")
 
     models = {
         "LogisticRegression": LogisticRegression(max_iter=1000, random_state=42),
@@ -44,7 +41,7 @@ def train_models(X_train, y_train, X_test, y_test):
     test_dataset = mlflow.data.from_numpy(features=X_test, targets=y_test, name="SocialMedia_Test_Data")
 
     for name, model in models.items():
-        logger.info(f"Đang chạy và log model: {name}...")
+        logger.info(f"Training and logging model: {name}")
         
         with mlflow.start_run(run_name=name):
 
@@ -73,15 +70,13 @@ def train_models(X_train, y_train, X_test, y_test):
                 best_model_name = name
 
     logger.info("="*50)
-    logger.info(f"🏆 MODEL CHIẾN THẮNG: {best_model_name} với F1-Score: {best_score:.4f}")
+    logger.info(f"Best model: {best_model_name} with F1-Score: {best_score:.4f}")
     logger.info("="*50)
 
     return best_model, best_model_name, best_score
 
-logger = logging.getLogger(__name__)
-
 def save_artifacts(best_model, best_model_name, best_score, scaler, encoders_dict, target_encoder, score_percentiles):
-    logger.info("Bắt đầu đóng gói và đánh giá Model trên Registry...")
+    logger.info("Starting model packaging and registry evaluation.")
 
     preprocessor_bundle = {
         "scaler": scaler,
@@ -112,7 +107,7 @@ def save_artifacts(best_model, best_model_name, best_score, scaler, encoders_dic
         mlflow.log_metric("validation_f1_score", best_score) 
         
         new_version = model_info.registered_model_version
-        logger.info(f"Đã đăng ký Model mới thành công: Version {new_version}")
+        logger.info(f"Successfully registered new model: Version {new_version}")
 
     client = MlflowClient()
 
@@ -122,19 +117,19 @@ def save_artifacts(best_model, best_model_name, best_score, scaler, encoders_dic
         prod_run = client.get_run(prod_model.run_id)
         prod_score = prod_run.data.metrics.get("validation_f1_score", 0.0)
         
-        logger.info(f"Model Production hiện tại: Version {prod_model.version} (F1: {prod_score:.4f})")
-        logger.info(f"Model mới huấn luyện: Version {new_version} (F1: {best_score:.4f})")
+        logger.info(f"Current production model: Version {prod_model.version} (F1: {prod_score:.4f})")
+        logger.info(f"Newly trained model: Version {new_version} (F1: {best_score:.4f})")
 
         if best_score > prod_score:
-            logger.info("🎉 Thử thách THÀNH CÔNG! Model mới hoạt động tốt hơn.")
-            logger.info(f"Đang thăng cấp Version {new_version} lên nhãn '{alias_name}'...")
+            logger.info("Challenge successful. New model outperforms current production.")
+            logger.info(f"Promoting Version {new_version} to alias '{alias_name}'.")
             client.set_registered_model_alias(name=model_name, alias=alias_name, version=new_version)
         else:
-            logger.warning("❌ Thử thách THẤT BẠI! Model mới không tốt bằng model hiện tại.")
-            logger.info(f"Giữ nguyên nhãn '{alias_name}' cho Version {prod_model.version}.")
+            logger.warning("Challenge failed. New model underperforms current production.")
+            logger.info(f"Retaining alias '{alias_name}' for Version {prod_model.version}.")
 
     except MlflowException:
-        logger.info(f"Chưa có model '{alias_name}' nào trên hệ thống. Đang gán nhãn cho Version {new_version}...")
+        logger.info(f"No '{alias_name}' model found. Assigning alias to Version {new_version}.")
         client.set_registered_model_alias(name=model_name, alias=alias_name, version=new_version)
 
-    logger.info("Hoàn tất quá trình lưu trữ và gán nhãn.")
+    logger.info("Artifact storage and aliasing completed.")

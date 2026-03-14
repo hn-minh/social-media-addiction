@@ -16,7 +16,7 @@ MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Đang khởi động API Server... Kết nối MLflow để tải Model @production.")
+    logger.info("Starting API server. Fetching @production model from MLflow.")
     
     app.state.ml_components = {}
     
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
         prod_model = client.get_model_version_by_alias(name=model_name, alias=alias_name)
         run_id = prod_model.run_id
         
-        logger.info(f"Đã tìm thấy Model Production: Version {prod_model.version} (Run ID: {run_id})")
+        logger.info(f"Production model found: Version {prod_model.version} (Run ID: {run_id})")
 
         model_uri = f"models:/{model_name}@{alias_name}"
         app.state.ml_components["model"] = mlflow.pyfunc.load_model(model_uri)
@@ -41,34 +41,31 @@ async def lifespan(app: FastAPI):
         )
         preprocessor_bundle = joblib.load(artifact_path)
         
-        # Nạp vào RAM
         app.state.ml_components["scaler"] = preprocessor_bundle["scaler"]
         app.state.ml_components["encoders"] = preprocessor_bundle["encoders"]
         app.state.ml_components["target_encoder"] = preprocessor_bundle["target_encoder"]
         app.state.ml_components["score_percentiles"] = preprocessor_bundle["score_percentiles"]
         
-        logger.info("✅ Đã tải thành công Model và các công cụ Preprocessing vào bộ nhớ.")
+        logger.info("Model and preprocessors successfully loaded into memory.")
         yield
         
     except MlflowException:
-        logger.critical(f"LỖI: Không tìm thấy model nào mang nhãn '@{alias_name}' trên MLflow.")
+        logger.critical(f"Error: Model alias '@{alias_name}' not found in MLflow.")
         raise
     except Exception as e:
-        logger.critical(f"Lỗi hệ thống khi khởi động API: {str(e)}")
+        logger.critical(f"API startup failed: {str(e)}")
         raise e
     finally:
-        logger.info("Đang tắt Server và giải phóng bộ nhớ.")
+        logger.info("Shutting down server and releasing memory.")
         app.state.ml_components.clear()
 
-# Khởi tạo App
 app = FastAPI(
     title="Social Media Addiction API", 
-    description="API dự đoán mức độ nghiện mạng xã hội dựa trên hành vi người dùng.",
+    description="API to predict social media addiction levels based on user behavior.",
     version="1.0.0",
     lifespan=lifespan
 )
 
-# KẾT NỐI ROUTERS
 app.include_router(predict.router)
 app.include_router(collect.router)
 
@@ -78,5 +75,4 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    # Lưu ý: Lệnh chạy giờ phải trỏ đúng đường dẫn module 'api.main:app'
     uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)

@@ -8,21 +8,22 @@ from src import config
 logger = logging.getLogger(__name__)
 
 def engineer_features(df):
-    logger.info("Start Feature Engineering...")
+    logger.info("Starting feature engineering.")
     df = df.copy()
 
     if "Student_ID" in df.columns:
         df.drop("Student_ID", axis=1, inplace=True)
+        
     if "Addicted_Score" in df.columns:
         class_counts = df['Addicted_Score'].value_counts()
         valid_classes = class_counts[class_counts >= config.MIN_SAMPLES_REQUIRED].index
         dropped_classes = class_counts[class_counts < config.MIN_SAMPLES_REQUIRED].index
         
         if len(dropped_classes) > 0:
-            logger.warning(f"Hệ thống tự động loại bỏ các class sau do quá ít dữ liệu (<{config.MIN_SAMPLES_REQUIRED} mẫu): {list(dropped_classes)}")
+            logger.warning(f"Dropped classes with <{config.MIN_SAMPLES_REQUIRED} samples: {list(dropped_classes)}")
             df = df[df['Addicted_Score'].isin(valid_classes)].reset_index(drop=True)
         else:
-            logger.info("Tất cả các class đều đủ số lượng mẫu tối thiểu. Không có class nào bị loại bỏ.")
+            logger.info("All classes meet minimum sample requirements. No classes dropped.")
 
     df['Usage_Category'] = pd.cut(
         df['Avg_Daily_Usage_Hours'], 
@@ -52,11 +53,11 @@ def engineer_features(df):
     cols_to_drop = ['Academic_Level', 'Gender', 'Sleep_Quality']
     df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
     
-    logger.info("Feature Engineering Completed.")
+    logger.info("Feature engineering completed.")
     return df
 
-def preprocess_and_split(df: pd.DataFrame):
-    logger.info("Encoding data")
+def preprocess_and_split(df):
+    logger.info("Encoding data.")
     df = df.copy()
 
     X = df.drop(columns=["Addicted_Score"])
@@ -78,12 +79,12 @@ def preprocess_and_split(df: pd.DataFrame):
         le = LabelEncoder()
         X[col] = le.fit_transform(X[col])
         encoders_dict[col] = le
-    logger.info(f"Đã encode {len(object_cols)} cột categorical.")
+    logger.info(f"Encoded {len(object_cols)} categorical columns.")
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y_encoded, test_size=config.TEST_SIZE, random_state=537, stratify=y_encoded
     )
-    logger.info(f"Split thành công")
+    logger.info("Data split successfully.")
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -92,8 +93,8 @@ def preprocess_and_split(df: pd.DataFrame):
     return X_train_scaled, X_test_scaled, y_train, y_test, scaler, encoders_dict, target_encoder, score_percentiles
 
 
-def preprocess_for_prediction(df_input: pd.DataFrame, preprocessor_bundle: dict) -> np.ndarray:
-    logger.info("Bắt đầu tiền xử lý dữ liệu cho API dự đoán...")
+def preprocess_for_prediction(df_input, preprocessor_bundle):
+    logger.info("Starting preprocessing for prediction API.")
     df = df_input.copy()
 
     df = engineer_features(df)
@@ -109,17 +110,16 @@ def preprocess_for_prediction(df_input: pd.DataFrame, preprocessor_bundle: dict)
             try:
                 df[col] = le.transform(df[col])
             except ValueError:
-                logger.warning(f"Cảnh báo: Phát hiện nhãn mới chưa biết ở cột '{col}'. Gán mặc định là -1.")
+                logger.warning(f"Unknown label detected in column '{col}'. Defaulting to -1.")
                 df[col] = -1 
         else:
-            logger.warning(f"Cột '{col}' có trong input nhưng không có bộ encoder tương ứng. Sẽ bị bỏ qua.")
+            logger.warning(f"Column '{col}' lacks a corresponding encoder. It will be ignored.")
 
     if hasattr(scaler, "feature_names_in_"):
         expected_cols = scaler.feature_names_in_
         df = df[expected_cols]
 
-    # 5. Chuẩn hóa dữ liệu (Scaling)
     X_scaled = scaler.transform(df)
 
-    logger.info("Hoàn tất tiền xử lý cho dự đoán.")
+    logger.info("Preprocessing for prediction completed.")
     return X_scaled

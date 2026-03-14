@@ -3,12 +3,8 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Request
 from api.schemas.user_input import UserInput
 from src.preprocessing import preprocess_for_prediction
-logger = logging.getLogger(__name__)
-import os
-from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
-
 
 router = APIRouter(
     prefix="/predict",
@@ -17,7 +13,7 @@ router = APIRouter(
 
 @router.post("/")
 def predict_addiction_level(user_input: UserInput, request: Request):
-    logger.info("Nhận được request dự đoán mới từ người dùng.")
+    logger.info("Received new prediction request.")
     try:
         ml_components = request.app.state.ml_components
 
@@ -34,7 +30,7 @@ def predict_addiction_level(user_input: UserInput, request: Request):
         
         result = int(prediction_real[0])
         percentile = ml_components["score_percentiles"].get(result, 0.0)
-        logger.info(f"✅ Dự đoán hoàn tất. Mức độ nghiện: {result}")
+        logger.info(f"Prediction complete. Addiction level: {result}")
         
         return {
             "status": "success",
@@ -43,5 +39,5 @@ def predict_addiction_level(user_input: UserInput, request: Request):
         }
         
     except Exception as e:
-        logger.error(f"❌ Lỗi trong quá trình xử lý request dự đoán: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Lỗi xử lý nội bộ: {str(e)}")
+        logger.error(f"Prediction request processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -9,7 +9,7 @@ load_dotenv()
 DATASET_URL = os.getenv("DATASET_URL")
 
 def load_data() -> pd.DataFrame:
-    logger.info("Bắt đầu kết nối tới Cloud PostgreSQL để tải dữ liệu...")
+    logger.info("Connecting to Cloud PostgreSQL to load data.")
     try:
         engine = create_engine(DATASET_URL)
         
@@ -17,10 +17,10 @@ def load_data() -> pd.DataFrame:
         
         df = pd.read_sql(query, con=engine)
         
-        logger.info(f"✅ Đã tải thành công {len(df)} dòng dữ liệu từ mây về RAM.")
+        logger.info(f"Successfully loaded {len(df)} rows from cloud to memory.")
         
         return df
         
     except Exception as e:
-        logger.error(f"❌ Lỗi khi tải dữ liệu từ Cloud Database: {str(e)}")
+        logger.error(f"Failed to load data from cloud database: {str(e)}")
         raise e

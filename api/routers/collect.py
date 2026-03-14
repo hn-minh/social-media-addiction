@@ -7,7 +7,6 @@ import uuid
 from api.schemas.user_report import UserReport
 from src import config
 
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -17,7 +16,7 @@ router = APIRouter(
 
 @router.post("/")
 def collect_user_data(data: UserReport):
-    logger.info("Nhận được dữ liệu phản hồi mới từ người dùng.")
+    logger.info("Received new user report data.")
     try:
         input_dict = data.model_dump()
         generated_id = f"{uuid.uuid4().hex[:8].upper()}"
@@ -31,18 +30,18 @@ def collect_user_data(data: UserReport):
         
         df_new.to_sql('users_behavior', con=engine, if_exists='append', index=False)
         
-        logger.info(f"Đã ghi bản ghi {generated_id} trực tiếp vào Cloud Database thành công.")
+        logger.info(f"Successfully saved record {generated_id} to cloud database.")
         
         return {
             "status": "success",
             "student_id": generated_id,
-            "message": "Cảm ơn bạn! Dữ liệu đã được đóng góp an toàn lên hệ thống đám mây."
+            "message": "Thank you! Data has been securely contributed to the cloud system."
         }
         
     except exc.SQLAlchemyError as sql_e:
-        logger.error(f"❌ Lỗi Database khi lưu dữ liệu: {str(sql_e)}")
-        raise HTTPException(status_code=500, detail="Lỗi kết nối hoặc ghi vào Database.")
+        logger.error(f"Database error while saving data: {str(sql_e)}")
+        raise HTTPException(status_code=500, detail="Database connection or write error.")
         
     except Exception as e:
-        logger.error(f"❌ Lỗi hệ thống khi xử lý dữ liệu thu thập: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Không thể lưu dữ liệu: {str(e)}")
+        logger.error(f"System error during data collection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save data: {str(e)}")
