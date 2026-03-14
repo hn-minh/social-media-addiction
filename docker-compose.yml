@@ -1,0 +1,27 @@
+version: '3.12'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: social_media_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: social_media_web
+    ports:
+      - "8501:8501"
+    environment:
+      - API_PREDICT_URL=http://api:8000/predict/
+      - API_COLLECT_URL=http://api:8000/collect/
+    depends_on:
+      - api
+    restart: always

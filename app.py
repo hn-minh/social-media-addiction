@@ -4,9 +4,8 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv(override=True)
-
-API_PREDICT_URL = os.getenv("API_PREDICT_URL")
-API_COLLECT_URL = os.getenv("API_COLLECT_URL")
+API_PREDICT_URL = os.getenv("API_PREDICT_URL", "http://localhost:8000/predict/")
+API_COLLECT_URL = os.getenv("API_COLLECT_URL", "http://localhost:8000/collect/")
 
 st.set_page_config(
     page_title="AI Dự đoán Nghiện MXH", 
