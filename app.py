@@ -8,12 +8,12 @@ API_PREDICT_URL = os.getenv("API_PREDICT_URL", "http://localhost:8000/predict/")
 API_COLLECT_URL = os.getenv("API_COLLECT_URL", "http://localhost:8000/collect/")
 
 st.set_page_config(
-    page_title="AI Dự đoán Nghiện MXH", 
+    page_title="Dự đoán Nghiện MXH", 
     page_icon="📱", 
     layout="centered"
 )
 
-st.title("📱 Hệ Thống Đánh Giá Mức Độ Nghiện Mạng Xã Hội")
+st.title("Hệ Thống Đánh Giá Mức Độ Nghiện Mạng Xã Hội")
 st.markdown("""
     Chào mừng bạn đến với hệ thống đánh giá tự động. Vui lòng nhập thông tin thói quen 
     sử dụng mạng xã hội của bạn, hệ thống của chúng tôi sẽ phân tích và đưa ra kết quả.
@@ -41,7 +41,7 @@ with st.form("user_input_form"):
     with col2:
         platform = st.selectbox("Nền tảng sử dụng nhiều nhất", ["Facebook", "TikTok", "Instagram", "Twitter", "YouTube", "Other"])
         usage_hours = st.slider("Số giờ dùng MXH trung bình/ngày", 0.0, 24.0, 3.0, step=0.5)
-        sleep_hours = st.slider("Số giờ ngủ trung bình/đêm", 0.0, 16.0, 7.0, step=0.5)
+        sleep_hours = st.slider("Số giờ ngủ trung bình/đêm", 0.0, 12.0, 7.0, step=0.5)
         mental_health = st.slider("Điểm sức khỏe tinh thần (1-Tệ nhất, 10-Tốt nhất)", 1, 10, 5)
         conflicts = st.slider("Số lần xung đột do MXH (trong tháng)", 0, 30, 0)
         
