@@ -7,6 +7,31 @@ load_dotenv(override=True)
 API_PREDICT_URL = os.getenv("API_PREDICT_URL", "http://localhost:8000/predict/")
 API_COLLECT_URL = os.getenv("API_COLLECT_URL", "http://localhost:8000/collect/")
 
+CountryType = [
+    'Bangladesh', 'India', 'USA', 'UK', 'Canada', 'Australia', 'Germany', 'Brazil',
+    'Japan', 'South Korea', 'France', 'Spain', 'Italy', 'Mexico', 'Russia', 'China',
+    'Sweden', 'Norway', 'Denmark', 'Netherlands', 'Belgium', 'Switzerland',
+    'Austria', 'Portugal', 'Greece', 'Ireland', 'New Zealand', 'Singapore',
+    'Malaysia', 'Thailand', 'Vietnam', 'Philippines', 'Indonesia', 'Taiwan',
+    'Hong Kong', 'Turkey', 'Israel', 'UAE', 'Egypt', 'Morocco', 'South Africa',
+    'Nigeria', 'Kenya', 'Ghana', 'Argentina', 'Chile', 'Colombia', 'Peru',
+    'Venezuela', 'Ecuador', 'Uruguay', 'Paraguay', 'Bolivia', 'Costa Rica',
+    'Panama', 'Jamaica', 'Trinidad', 'Bahamas', 'Iceland', 'Finland', 'Poland',
+    'Romania', 'Hungary', 'Czech Republic', 'Slovakia', 'Croatia', 'Serbia',
+    'Slovenia', 'Bulgaria', 'Estonia', 'Latvia', 'Lithuania', 'Ukraine', 'Moldova',
+    'Belarus', 'Kazakhstan', 'Uzbekistan', 'Kyrgyzstan', 'Tajikistan', 'Armenia',
+    'Georgia', 'Azerbaijan', 'Cyprus', 'Malta', 'Luxembourg', 'Monaco', 'Andorra',
+    'San Marino', 'Vatican City', 'Liechtenstein', 'Montenegro', 'Albania',
+    'North Macedonia', 'Kosovo', 'Bosnia', 'Qatar', 'Kuwait', 'Bahrain', 'Oman',
+    'Jordan', 'Lebanon', 'Iraq', 'Yemen', 'Syria', 'Afghanistan', 'Pakistan',
+    'Nepal', 'Bhutan', 'Sri Lanka', 'Maldives'
+]
+
+PlatformType = [
+    'Instagram', 'Twitter', 'TikTok', 'YouTube', 'Facebook', 'LinkedIn', 'Snapchat',
+    'LINE', 'KakaoTalk', 'VKontakte', 'WhatsApp', 'WeChat'
+]
+
 st.set_page_config(
     page_title="Dự đoán Nghiện MXH", 
     page_icon="📱", 
@@ -35,15 +60,15 @@ with st.form("user_input_form"):
         age = st.number_input("Tuổi", min_value=10, max_value=100, value=20)
         gender = st.selectbox("Giới tính", ["Male", "Female"])
         academic_level = st.selectbox("Trình độ học vấn", ["High School", "Undergraduate", "Graduate"])
-        country = st.text_input("Quốc gia (VD: Vietnam, USA, Japan)", value="Vietnam")
+        country = st.selectbox("Quốc gia", CountryType)
         relationship = st.selectbox("Tình trạng mối quan hệ", ["Single", "In Relationship", "Complicated"])
         
     with col2:
-        platform = st.selectbox("Nền tảng sử dụng nhiều nhất", ["Facebook", "TikTok", "Instagram", "Twitter", "YouTube", "Other"])
+        platform = st.selectbox("Nền tảng sử dụng nhiều nhất", PlatformType)
         usage_hours = st.slider("Số giờ dùng MXH trung bình/ngày", 0.0, 24.0, 3.0, step=0.5)
         sleep_hours = st.slider("Số giờ ngủ trung bình/đêm", 0.0, 12.0, 7.0, step=0.5)
-        mental_health = st.slider("Điểm sức khỏe tinh thần (1-Tệ nhất, 10-Tốt nhất)", 1, 10, 5)
-        conflicts = st.slider("Số lần xung đột do MXH (trong tháng)", 0, 30, 0)
+        mental_health = st.slider("Điểm sức khỏe tinh thần", 1, 10, 5)
+        conflicts = st.slider("Mức độ xung đột trên mạng xã hội", 1, 10, 3)
         
     affects_academic = st.checkbox("Mạng xã hội có ảnh hưởng tiêu cực đến kết quả học tập/công việc của bạn không?")
 
