@@ -2,12 +2,16 @@ import logging
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import create_engine, exc
-import uuid
-
+import random
+import time
+import os
+from dotenv import load_dotenv
 from api.schemas.user_report import UserReport
 from src import config
 
 logger = logging.getLogger(__name__)
+load_dotenv()
+DATASET_URL = os.getenv('DATASET_URL')
 
 router = APIRouter(
     prefix="/collect",
@@ -19,14 +23,14 @@ def collect_user_data(data: UserReport):
     logger.info("Received new user report data.")
     try:
         input_dict = data.model_dump()
-        generated_id = f"{uuid.uuid4().hex[:8].upper()}"
+        generated_id = int(time.time()) * 100 + random.randint(1, 99)
         
         final_data = {"Student_ID": generated_id}
         final_data.update(input_dict)
         
         df_new = pd.DataFrame([final_data])
         
-        engine = create_engine(config.CLOUD_DB_URL)
+        engine = create_engine(DATASET_URL)
         
         df_new.to_sql('users_behavior', con=engine, if_exists='append', index=False)
         
