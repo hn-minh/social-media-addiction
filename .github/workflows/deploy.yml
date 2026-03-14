@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd social-media-addiction.mlflow
+            cd social-media-addiction
             
             git pull origin main
             
