@@ -1,13 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import mlflow
 from mlflow.tracking import MlflowClient
 from mlflow.exceptions import MlflowException
 import joblib
 import os
 from dotenv import load_dotenv
-
 from api.routers import predict, collect
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,21 @@ app = FastAPI(
     description="API to predict social media addiction levels based on user behavior.",
     version="1.0.0",
     lifespan=lifespan
+)
+
+allowed_frontend_url = os.getenv("FRONTEND_URL")
+origins = [
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
+    allowed_frontend_url
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 
 app.include_router(predict.router)

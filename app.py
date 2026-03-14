@@ -120,7 +120,7 @@ if st.session_state.prediction_result:
     st.write("Hãy cung cấp mức độ thực tế của bạn để giúp AI của chúng tôi học hỏi và thông minh hơn vào ngày mai!")
     
     with st.form("feedback_form"):
-        actual_score = st.slider("Mức độ nghiện thực tế của bạn (0-5)", 0, 5, score)
+        actual_score = st.slider("Mức độ nghiện thực tế của bạn", 1, 10, score)
         feedback_submit = st.form_submit_button("Gửi phản hồi đóng góp data")
         
         if feedback_submit:
