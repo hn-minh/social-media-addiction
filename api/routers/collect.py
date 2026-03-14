@@ -27,21 +27,27 @@ def collect_user_data(data: UserReport):
         
         df_new = pd.DataFrame([final_data])
         
-        save_dir = config.DATA_DIR
-        save_dir.mkdir(parents=True, exist_ok=True)
-        save_path = save_dir / "collected_data.csv"
+        save_path = config.DATA_PATH 
         
         if not os.path.exists(save_path):
             df_new.to_csv(save_path, index=False)
-            logger.info(f"Đã tạo file mới và lưu dữ liệu với ID: {generated_id}")
+            logger.info(f"Đã tạo lại file dataset gốc và lưu dữ liệu với ID: {generated_id}")
         else:
+            existing_cols = pd.read_csv(save_path, nrows=0).columns
+            
+            for col in existing_cols:
+                if col not in df_new.columns:
+                    df_new[col] = None
+                    
+            df_new = df_new[existing_cols]
+            
             df_new.to_csv(save_path, mode='a', header=False, index=False)
-            logger.info(f"Đã append dữ liệu thành công (ID: {generated_id}).")
+            logger.info(f"Đã ghi trực tiếp vào dataset gốc thành công (ID: {generated_id}).")
             
         return {
             "status": "success",
             "student_id": generated_id,
-            "message": "Cảm ơn bạn! Dữ liệu đã được lưu trữ an toàn."
+            "message": "Cảm ơn bạn! Dữ liệu đã được đóng góp."
         }
         
     except Exception as e:
